@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using Newtonsoft.Json.Linq;
 using VirtoCommerce.Storefront.AutoRestClients.OrdersModuleApi;
 using VirtoCommerce.Storefront.Converters;
 using VirtoCommerce.Storefront.Model;
@@ -86,7 +87,18 @@ namespace VirtoCommerce.Storefront.Controllers
             var postProcessingResult = await _orderApi.OrderModule.PostProcessPaymentAsync(callback);
             if (postProcessingResult.IsSuccess.HasValue && postProcessingResult.IsSuccess.Value)
             {
-                return StoreFrontRedirect("~/cart/thanks/" + postProcessingResult.OrderId);
+                if (callback.Parameters.Any(pair => pair.Key == "klarna_order_id"))
+                {
+                    string html = postProcessingResult.ReturnUrl;
+
+                    WorkContext.PaymentFormHtml = html;
+
+                    return View("payment-form", WorkContext);
+                }
+                else
+                {
+                    return StoreFrontRedirect("~/cart/thanks/" + postProcessingResult.OrderId);
+                }
             }
             else
             {
