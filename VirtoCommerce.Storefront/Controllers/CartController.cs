@@ -89,11 +89,20 @@ namespace VirtoCommerce.Storefront.Controllers
             {
                 if (callback.Parameters.Any(pair => pair.Key == "klarna_order_id"))
                 {
+                    orderModel.CustomerOrder order = await _orderApi.OrderModule.GetByNumberAsync(postProcessingResult.OrderId);
+
+                    if (order == null || order.CustomerId != WorkContext.CurrentCustomer.Id)
+                    {
+                        order = null;
+                    }
+
+                    WorkContext.CurrentOrder = order.ToCustomerOrder(WorkContext.AllCurrencies, WorkContext.CurrentLanguage);
+
                     string html = postProcessingResult.ReturnUrl;
 
                     WorkContext.PaymentFormHtml = html;
 
-                    return View("payment-form", WorkContext);
+                    return View("thanks", WorkContext);
                 }
                 else
                 {
